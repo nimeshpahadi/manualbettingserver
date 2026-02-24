@@ -456,7 +456,7 @@ pub async fn update_account_batch_bets(
     tag = "bets"
 )]
 pub async fn update_account_batch_bet(
-    Path((account_id, batch_id, bet_id)): Path<(i64, i64, i64)>,
+    Path((batch_id, bet_id)): Path<(i64, i64)>,
     State(state): State<AppState>,
     Json(payload): Json<UpdateBetStatusRequest>,
 ) -> Result<Json<Bet>, StatusCode> {
