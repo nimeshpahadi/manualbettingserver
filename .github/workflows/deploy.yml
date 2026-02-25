@@ -29,20 +29,18 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build and push backend
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          docker build -t betstream-backend .
-          docker tag betstream-backend \
-            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/betstream-backend:latest
-          docker push \
-            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/betstream-backend:latest
+          docker build -t $REGISTRY/betstream-backend:latest .
+          docker push $REGISTRY/betstream-backend:latest
 
       - name: Build and push frontend
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          docker build -t betstream-frontend ./betting-frontend
-          docker tag betstream-frontend \
-            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/betstream-frontend:latest
-          docker push \
-            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/betstream-frontend:latest
+          docker build -t $REGISTRY/betstream-frontend:latest ./betting-frontend
+          docker push $REGISTRY/betstream-frontend:latest
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.0
@@ -51,17 +49,11 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            AWS_REGION=ap-southeast-2
-            AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}
-
-            aws ecr get-login-password --region $AWS_REGION | \
+            cd ~
+            aws ecr get-login-password --region ap-southeast-2 | \
               docker login --username AWS --password-stdin \
-              $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-
-            cd betstream
-
+              ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com
             docker-compose pull
             docker-compose down
             docker-compose up -d
-
             echo "✅ Deployment complete!"
