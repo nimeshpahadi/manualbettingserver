@@ -47,7 +47,7 @@ RUN apk add --no-cache bash curl tzdata
 WORKDIR /usr/local/bin
 
 # Copy compiled binary
-COPY --from=builder /app/target/release/betting-api ./betstream
+COPY --from=builder /app/target/release/betstream ./betstream
 
 # Copy seed script
 COPY ./data/seed.sh /data/seed.sh
