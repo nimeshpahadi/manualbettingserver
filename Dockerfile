@@ -23,15 +23,5 @@ FROM alpine:3.19
 RUN apk add --no-cache bash curl tzdata
 WORKDIR /usr/local/bin
 COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/betstream ./betstream
-COPY ./data/seed.sh /data/seed.sh
-RUN chmod +x /data/seed.sh
 EXPOSE 3001
-CMD bash -c '\
-    ./betstream & \
-    BACKEND_PID=$!; \
-    echo "⏳ Waiting for backend to start..."; \
-    until curl -s http://localhost:3001/api/v1/accounts >/dev/null 2>&1; do sleep 1; done; \
-    echo "✅ Backend ready. Running seeder..."; \
-    /data/seed.sh; \
-    wait $BACKEND_PID \
-'
+CMD ["./betstream"]
