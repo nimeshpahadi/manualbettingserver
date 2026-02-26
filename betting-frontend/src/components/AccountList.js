@@ -464,7 +464,7 @@ const handleSubmitBatch = async () => {
                           <td className="px-4 py-2">
                             <BetStatusSelector
                               bet={bet}
-                              onChange={(newStatus) => handleStatusChange(bet.id, newStatus)}
+                              onChange={(newStatus) => handleStatusChange(bet.pid, newStatus)}
                             />
                           </td>
                         </tr>
