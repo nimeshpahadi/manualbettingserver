@@ -17,8 +17,8 @@ import {
   updateBetStatus,
   submitBatch,
 } from "../api/accounts";
-
 function formatSelection(selection) {
+  if (!selection) return "";
   const trimmed = selection.split("**")[0].trim();
   return trimmed
     .split("/")
@@ -77,9 +77,9 @@ export default function AccountBatchesUI() {
     if (account?.name) {
       document.title = account.name;
     } else {
-      document.title = "Manual Betting Server";
+      document.title = "Betstream";
     }
-    return () => { document.title = "Manual Betting Server"; };
+    return () => { document.title = "Betstream"; };
   }, [account]);
 
   useEffect(() => { selectedBatchIdRef.current = selectedBatchId; }, [selectedBatchId]);
@@ -243,8 +243,6 @@ export default function AccountBatchesUI() {
     }
   };
 
-  // ── LOADING / ERROR (restyled only) ────────────────────────────────────────
-
   if (loading)
     return (
       <div style={{ minHeight: "100vh", background: "#07080c", color: "#dde1f0",
@@ -263,13 +261,11 @@ export default function AccountBatchesUI() {
       </div>
     );
 
-  // ── RENDER (structure 100% identical, only colors/fonts changed) ───────────
-
   return (
     <div style={{ minHeight: "100vh", background: "#07080c", color: "#dde1f0",
       fontFamily: "'IBM Plex Mono', monospace" }}>
 
-      {/* Mobile header — same logic, new colors */}
+      {/* Mobile header */}
       <div className="lg:hidden" style={{ display: "flex", alignItems: "center",
         justifyContent: "space-between", padding: "12px 16px",
         borderBottom: "1px solid #1c2035", background: "#0e1018" }}>
@@ -295,14 +291,12 @@ export default function AccountBatchesUI() {
             sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           }`}
         >
-          {/* Mobile close */}
           <div className="flex justify-between items-center lg:hidden" style={{ marginBottom: 8 }}>
             <span style={{ fontWeight: 700 }}>Accounts</span>
             <button onClick={() => setSidebarOpen(false)}
               style={{ background: "none", border: "none", color: "#dde1f0", cursor: "pointer", fontSize: 18 }}>✕</button>
           </div>
 
-          {/* Accounts list */}
           <div>
             <div style={{ fontSize: 10, letterSpacing: "2px", textTransform: "uppercase",
               color: "#4a5270", marginBottom: 10 }}>Accounts</div>
@@ -333,7 +327,6 @@ export default function AccountBatchesUI() {
             </ul>
           </div>
 
-          {/* Batches list */}
           <div>
             <div style={{ fontSize: 10, letterSpacing: "2px", textTransform: "uppercase",
               color: "#4a5270", marginBottom: 10 }}>Batches</div>
@@ -376,164 +369,167 @@ export default function AccountBatchesUI() {
           )}
         </aside>
 
+        {/* ── Main ── */}
         <main className="lg:col-span-3" style={{ padding: 20 }}>
-          <section style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <section style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-            {selectedBatch && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {selectedBatch && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-                <div style={{ background: "#0e1018", border: "1px solid #1c2035",
-                  borderRadius: 12, padding: 20 }}>
+                  <div style={{ background: "#0e1018", border: "1px solid #1c2035",
+                    borderRadius: 12, padding: 20 }}>
 
-                  <div style={{ display: "flex", justifyContent: "space-between",
-                    alignItems: "center", marginBottom: 16 }}>
-                    <span style={{ fontSize: 17, fontWeight: 700 }}>
-                      {selectedBatch.meta?.name || `Batch ${selectedBatch.id}`}
-                    </span>
-                    <span style={{
-                      padding: "3px 12px", borderRadius: 20, fontSize: 12,
-                      border: selectedBatch.completed ? "1px solid #166534" : "1px solid #92400e",
-                      background: selectedBatch.completed ? "#052e16" : "#1c0f00",
-                      color: selectedBatch.completed ? "#86efac" : "#fcd34d",
-                    }}>
-                      {selectedBatch.completed ? "Completed" : "Active"}
-                    </span>
+                    <div style={{ display: "flex", justifyContent: "space-between",
+                      alignItems: "center", marginBottom: 16 }}>
+                      <span style={{ fontSize: 17, fontWeight: 700 }}>
+                        {selectedBatch.meta?.name || `Batch ${selectedBatch.id}`}
+                      </span>
+                      <span style={{
+                        padding: "3px 12px", borderRadius: 20, fontSize: 12,
+                        border: selectedBatch.completed ? "1px solid #166534" : "1px solid #92400e",
+                        background: selectedBatch.completed ? "#052e16" : "#1c0f00",
+                        color: selectedBatch.completed ? "#86efac" : "#fcd34d",
+                      }}>
+                        {selectedBatch.completed ? "Completed" : "Active"}
+                      </span>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                      gap: 12, fontSize: 12, color: "#8891b0", marginBottom: 16 }}>
+                      <div><Calendar className="inline w-4 h-4" style={{ marginRight: 5 }} />{formatDate(selectedBatch.created_at)}</div>
+                      <div><Target className="inline w-4 h-4" style={{ marginRight: 5 }} />Total Bets: {selectedBatch.bets?.length || 0}</div>
+                      <div><DollarSign className="inline w-4 h-4" style={{ marginRight: 5 }} />Total Stake: ${calculateTotalStake(selectedBatch.bets)}</div>
+                    </div>
+
+                    {selectedBatch.meta && (
+                      <>
+                        <div style={{ fontSize: 12, color: "#8891b0", fontWeight: 600, marginBottom: 8 }}>Metadata:</div>
+                        <pre style={{ background: "#07080c", border: "1px solid #1c2035", borderRadius: 8,
+                          padding: 12, overflowX: "auto", color: "#dde1f0", fontSize: 11, lineHeight: 1.7 }}>
+                          {JSON.stringify(selectedBatch.meta, null, 2)}
+                        </pre>
+
+                        <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+                          {(() => {
+                            const { successful, failed, pending } = getStatusCounts(selectedBatch.bets);
+                            return (
+                              <>
+                                <span style={{ padding: "3px 12px", borderRadius: 20, fontSize: 11,
+                                  background: "#052e16", color: "#86efac", border: "1px solid #166534" }}>
+                                  ✓ {successful}
+                                </span>
+                                <span style={{ padding: "3px 12px", borderRadius: 20, fontSize: 11,
+                                  background: "#2d0a0a", color: "#fca5a5", border: "1px solid #7f1d1d" }}>
+                                  ✗ {failed}
+                                </span>
+                                <span style={{ padding: "3px 12px", borderRadius: 20, fontSize: 11,
+                                  background: "#1c1100", color: "#fde68a", border: "1px solid #713f12" }}>
+                                  ◌ {pending}
+                                </span>
+                              </>
+                            );
+                          })()}
+                        </div>
+                      </>
+                    )}
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                    gap: 12, fontSize: 12, color: "#8891b0", marginBottom: 16 }}>
-                    <div><Calendar className="inline w-4 h-4" style={{ marginRight: 5 }} />{formatDate(selectedBatch.created_at)}</div>
-                    <div><Target className="inline w-4 h-4" style={{ marginRight: 5 }} />Total Bets: {selectedBatch.bets?.length || 0}</div>
-                    <div><DollarSign className="inline w-4 h-4" style={{ marginRight: 5 }} />Total Stake: ${calculateTotalStake(selectedBatch.bets)}</div>
-                  </div>
-
-                  {selectedBatch.meta && (
-                    <>
-                      <div style={{ fontSize: 12, color: "#8891b0", fontWeight: 600, marginBottom: 8 }}>Metadata:</div>
-                      <pre style={{ background: "#07080c", border: "1px solid #1c2035", borderRadius: 8,
-                        padding: 12, overflowX: "auto", color: "#dde1f0", fontSize: 11, lineHeight: 1.7 }}>
-                        {JSON.stringify(selectedBatch.meta, null, 2)}
-                      </pre>
-
-                      <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-                        {(() => {
-                          const { successful, failed, pending } = getStatusCounts(selectedBatch.bets);
-                          return (
-                            <>
-                              <span style={{ padding: "3px 12px", borderRadius: 20, fontSize: 11,
-                                background: "#052e16", color: "#86efac", border: "1px solid #166534" }}>
-                                ✓ {successful}
-                              </span>
-                              <span style={{ padding: "3px 12px", borderRadius: 20, fontSize: 11,
-                                background: "#2d0a0a", color: "#fca5a5", border: "1px solid #7f1d1d" }}>
-                                ✗ {failed}
-                              </span>
-                              <span style={{ padding: "3px 12px", borderRadius: 20, fontSize: 11,
-                                background: "#1c1100", color: "#fde68a", border: "1px solid #713f12" }}>
-                                ◌ {pending}
-                              </span>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <div style={{ background: "#0e1018", border: "1px solid #1c2035",
-                  borderRadius: 12, overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, textAlign: "center" }}>
-                    <thead>
-                      <tr style={{ background: "#13161f" }}>
-                        {["#", "Selection", "Stake", "Cost", "Status", "Update"].map((h) => (
-                          <th key={h} style={{ padding: "10px 14px", fontSize: 10,
-                            letterSpacing: "1.5px", textTransform: "uppercase",
-                            color: "#4a5270", fontWeight: 500,
-                            borderBottom: "1px solid #1c2035" }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedBatch.bets?.map((bet) => (
-                        <tr key={bet.pid}
-                          onMouseEnter={e => e.currentTarget.style.background = bet.status === "successful" ? "rgba(34,197,94,0.10)" : bet.status === "failed" ? "rgba(239,68,68,0.10)" : "rgba(255,255,255,0.03)"}
-                          onMouseLeave={e => e.currentTarget.style.background = bet.status === "successful" ? "rgba(34,197,94,0.05)" : bet.status === "failed" ? "rgba(239,68,68,0.05)" : "transparent"}
-                          style={{
-                            borderBottom: "1px solid #1c2035",
-                            transition: "background .15s",
-                            background: bet.status === "successful"
-                              ? "rgba(34,197,94,0.05)"
-                              : bet.status === "failed"
-                              ? "rgba(239,68,68,0.05)"
-                              : "transparent",
-                          }}>
-                          <td style={{ padding: "10px 14px", color: "#4a5270" }}>{bet.id}</td>
-                          <td style={{ padding: "10px 14px", maxWidth: 260 }}>
-                            <details style={{ background: "#07080c", border: "1px solid #1c2035",
-                              borderRadius: 7, textAlign: "left" }}>
-                              <summary style={{ padding: "6px 10px", cursor: "pointer",
-                                color: "#dde1f0", fontWeight: 500,
-                                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                {bet.selection}
-                              </summary>
-                              <div style={{ padding: "8px 10px" }}>
-                                <pre style={{ whiteSpace: "pre-line", fontSize: 12,
-                                  color: "#8891b0", wordBreak: "break-word" }}>
-                                  {formatSelection(bet.selection)}
-                                </pre>
-                              </div>
-                            </details>
-                          </td>
-                          <td style={{ padding: "10px 14px" }}>${bet.stake}</td>
-                          <td style={{ padding: "10px 14px" }}>${bet.cost}</td>
-                          <td style={{ padding: "10px 14px" }}>
-                            <span style={{
-                              padding: "2px 10px", borderRadius: 20, fontSize: 11,
-                              background: bet.status === "successful" ? "#052e16"
-                                : bet.status === "failed" ? "#2d0a0a" : "#1c1100",
-                              color: bet.status === "successful" ? "#86efac"
-                                : bet.status === "failed" ? "#fca5a5" : "#fde68a",
-                              border: `1px solid ${bet.status === "successful" ? "#166534"
-                                : bet.status === "failed" ? "#7f1d1d" : "#713f12"}`,
-                            }}>
-                              {bet.status || "pending"}
-                            </span>
-                          </td>
-                          <td style={{ padding: "10px 14px" }}>
-                            <BetStatusSelector
-                              bet={bet}
-                              onChange={(newStatus) => handleStatusChange(bet.pid, newStatus)}
-                            />
-                          </td>
+                  <div style={{ background: "#0e1018", border: "1px solid #1c2035",
+                    borderRadius: 12, overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, textAlign: "center" }}>
+                      <thead>
+                        <tr style={{ background: "#13161f" }}>
+                          {["#", "Selection", "Stake", "Cost", "Status", "Update"].map((h) => (
+                            <th key={h} style={{ padding: "10px 14px", fontSize: 10,
+                              letterSpacing: "1.5px", textTransform: "uppercase",
+                              color: "#4a5270", fontWeight: 500,
+                              borderBottom: "1px solid #1c2035" }}>{h}</th>
+                          ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {selectedBatch.bets?.map((bet) => (
+                          <tr key={bet.pid}
+                            onMouseEnter={e => e.currentTarget.style.background = bet.status === "successful" ? "rgba(34,197,94,0.10)" : bet.status === "failed" ? "rgba(239,68,68,0.10)" : "rgba(255,255,255,0.03)"}
+                            onMouseLeave={e => e.currentTarget.style.background = bet.status === "successful" ? "rgba(34,197,94,0.05)" : bet.status === "failed" ? "rgba(239,68,68,0.05)" : "transparent"}
+                            style={{
+                              borderBottom: "1px solid #1c2035",
+                              transition: "background .15s",
+                              background: bet.status === "successful"
+                                ? "rgba(34,197,94,0.05)"
+                                : bet.status === "failed"
+                                ? "rgba(239,68,68,0.05)"
+                                : "transparent",
+                            }}>
+                            <td style={{ padding: "10px 14px", color: "#4a5270" }}>{bet.id}</td>
+                            <td style={{ padding: "10px 14px", maxWidth: 260 }}>
+                              <details style={{ background: "#07080c", border: "1px solid #1c2035",
+                                borderRadius: 7, textAlign: "left" }}>
+                                <summary style={{ padding: "6px 10px", cursor: "pointer",
+                                  color: "#dde1f0", fontWeight: 500,
+                                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                  {bet.selection}
+                                </summary>
+                                <div style={{ padding: "8px 10px" }}>
+                                  <pre style={{ whiteSpace: "pre-line", fontSize: 12,
+                                    color: "#8891b0", wordBreak: "break-word" }}>
+                                    {formatSelection(bet.selection)}
+                                  </pre>
+                                </div>
+                              </details>
+                            </td>
+                            <td style={{ padding: "10px 14px" }}>${bet.stake}</td>
+                            <td style={{ padding: "10px 14px" }}>${bet.cost}</td>
+                            <td style={{ padding: "10px 14px" }}>
+                              <span style={{
+                                padding: "2px 10px", borderRadius: 20, fontSize: 11,
+                                background: bet.status === "successful" ? "#052e16"
+                                  : bet.status === "failed" ? "#2d0a0a" : "#1c1100",
+                                color: bet.status === "successful" ? "#86efac"
+                                  : bet.status === "failed" ? "#fca5a5" : "#fde68a",
+                                border: `1px solid ${bet.status === "successful" ? "#166534"
+                                  : bet.status === "failed" ? "#7f1d1d" : "#713f12"}`,
+                              }}>
+                                {bet.status || "pending"}
+                              </span>
+                            </td>
+                            <td style={{ padding: "10px 14px" }}>
+                              <BetStatusSelector
+                                bet={bet}
+                                onChange={(newStatus) => handleStatusChange(bet.pid, newStatus)}
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
 
-                <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                  <button onClick={handleSubmitBatch} style={{
-                    background: "#f5a623", color: "#000", border: "none",
-                    padding: "9px 22px", borderRadius: 8, cursor: "pointer",
-                    fontFamily: "inherit", fontSize: 13, fontWeight: 600,
-                    transition: "background .15s",
-                  }}
-                    onMouseEnter={e => e.currentTarget.style.background = "#f7ba4a"}
-                    onMouseLeave={e => e.currentTarget.style.background = "#f5a623"}
-                  >
-                    Submit Batch
-                  </button>
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <button onClick={handleSubmitBatch} style={{
+                      background: "#f5a623", color: "#000", border: "none",
+                      padding: "9px 22px", borderRadius: 8, cursor: "pointer",
+                      fontFamily: "inherit", fontSize: 13, fontWeight: 600,
+                      transition: "background .15s",
+                    }}
+                      onMouseEnter={e => e.currentTarget.style.background = "#f7ba4a"}
+                      onMouseLeave={e => e.currentTarget.style.background = "#f5a623"}
+                    >
+                      Submit Batch
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {!selectedBatch && (
-              <div style={{ height: 240, display: "flex", justifyContent: "center",
-                alignItems: "center", color: "#4a5270", fontSize: 15 }}>
-                No active batch
-              </div>
-            )}
-          </section>
+              {!selectedBatch && (
+                <div style={{ height: 240, display: "flex", justifyContent: "center",
+                  alignItems: "center", color: "#4a5270", fontSize: 15 }}>
+                  No active batch
+                </div>
+              )}
+            </section>
+          </div>
         </main>
       </div>
     </div>
